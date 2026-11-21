@@ -50,7 +50,7 @@ function finishTeaser(){
  document.documentElement.classList.remove('lock');
  setTimeout(()=>ScrollTrigger.refresh(),100);
 }
-function fallback(){teaser.classList.add('fallback');if(!finished)setTimeout(finishTeaser,4500)}
+function fallback(){teaser.classList.add('fallback');finishTeaser()}
 function loadMedia(){
  return new Promise(res=>{
   let n=0;const done=()=>{if(++n===2)res()};
@@ -77,11 +77,11 @@ $('#skip').onclick=()=>{vid.pause();finishTeaser();$('#hero').scrollIntoView({be
 $('#snd').onclick=e=>{vid.muted=!vid.muted;e.currentTarget.textContent=vid.muted?'Sound off':'Sound on';e.currentTarget.setAttribute('aria-pressed',!vid.muted)};
 $('#up').onclick=()=>scrollTo({top:0,behavior:RM?'auto':'smooth'});
 $('#burger').onclick=e=>{const o=$('#nav').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o);e.currentTarget.textContent=o?'Close':'Menu'};
-$('#nav').addEventListener('click',e=>{if(e.target.closest('a')){$('#nav').classList.remove('open');$('#burger').textContent='Menu'}});
+$('#nav').addEventListener('click',e=>{if(e.target.closest('a')){$('#nav').classList.remove('open');$('#burger').textContent='Menu';$('#burger').setAttribute('aria-expanded','false')}});
 
 /* ============ THREE: OBSIDIAN MONOLITH ============ */
 const S={x:0,y:-5,z:-5,rx:.2,ry:0,rz:0,s:1,cx:0,cz:8,r:0,k:0},P={...S}; // S = scroll targets, P = smoothed
-let gl=true,renderer,scene,cam,monolith,mat,keyL,rimL,fillL,edges,active=false,mx=0,my=0;
+let gl=true,renderer,scene,cam,monolith,mat,keyL,rimL,fillL,edges,storyTrigger,active=false,mx=0,my=0;
 try{
  renderer=new THREE.WebGLRenderer({canvas:$('#gl'),antialias:!MOB,alpha:true,powerPreference:'high-performance'});
  renderer.setPixelRatio(Math.min(devicePixelRatio,MOB?1.5:2));
@@ -139,7 +139,7 @@ function initScene(){
 function resize(){if(!gl)return;renderer.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);
 addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)active=false;else ScrollTrigger.update()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)active=false;else{ScrollTrigger.update();active=storyTrigger?.isActive??false}});
 
 // adaptive quality — drops pixel ratio if frames run slow
 let q=0,last=performance.now(),slow=0;
@@ -178,7 +178,7 @@ function buildNarrative(){
  if(gl){
   const tl=gsap.timeline({scrollTrigger:{trigger:'#story',start:'top bottom',end:'bottom bottom',scrub:RM?true:.8}});
   KF.forEach((f,i)=>tl.to(S,{...f,duration:1,ease:'power2.inOut'},i));
-  ScrollTrigger.create({trigger:'#story',start:'top bottom',end:'bottom top',onToggle:s=>active=s.isActive});
+  storyTrigger=ScrollTrigger.create({trigger:'#story',start:'top bottom',end:'bottom top',onToggle:s=>active=s.isActive});
  }
  // text choreography — direction per stage, fully reversible
  const from={left:{x:-140,autoAlpha:0},right:{x:140,autoAlpha:0},up:{y:90,autoAlpha:0},scale:{scale:.82,autoAlpha:0,transformOrigin:'50% 50%'},mask:{clipPath:'inset(0 0 100% 0)',y:30,autoAlpha:0}};
